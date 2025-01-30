@@ -6,7 +6,7 @@
 /*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/26 19:24:00 by abdsalah          #+#    #+#             */
-/*   Updated: 2025/01/30 02:55:01 by abdsalah         ###   ########.fr       */
+/*   Updated: 2025/01/30 14:32:34 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,44 @@
 /* ************************************************************************** */
 /*                            STRUCTS                                          */
 /* ************************************************************************** */
+
+
+typedef enum e_token_type
+{
+    TOKEN_WORD,        // Command or argument
+    TOKEN_PIPE,        // |
+    TOKEN_REDIRECT_IN, // <
+    TOKEN_REDIRECT_OUT,// >
+    TOKEN_HEREDOC,     // <<
+    TOKEN_APPEND,      // >>
+    TOKEN_QUOTE,       // ' or "
+}   t_token_type;
+
+typedef struct s_token
+{
+    t_token_type type;
+    char         *value;
+    struct s_token *next;
+}   t_token;
+
+typedef enum e_node_type
+{
+    NODE_COMMAND,   // A simple command with arguments
+    NODE_PIPE,      // A pipe '|'
+    NODE_REDIR_IN,  // Input redirection '<'
+    NODE_REDIR_OUT, // Output redirection '>'
+    NODE_HEREDOC,   // Heredoc '<<'
+    NODE_APPEND     // Append '>>'
+}   t_node_type;
+
+typedef struct s_ast
+{
+    t_node_type type;   // Type of AST node
+    char        **args; // Command and its arguments (NULL if not a command)
+    char        *file;  // Filename for redirection (NULL if not a redirection)
+    struct s_ast *left; // Left child (for pipes and redirections)
+    struct s_ast *right;// Right child (for pipes and redirections)
+}   t_ast;
 
 /* 
 ** s_env: represents a single environment variable in the shell, with a name
@@ -167,4 +205,11 @@ void        init_minishell(t_shell *shell, char **envp);
 
 /* ************************************************************************** */
 
+t_token     *lexer(char *input);
+void        print_tokens(t_token *tokens);
+void        print_ast(t_ast *ast);
+void        parse_tokens(t_token *tokens, t_ast **ast, t_env *env_list);
+void        free_parsed_data(t_ast *ast);
+char        *expand_variables(char *input, t_env *env_list);
+char        *ft_getenv(const char *name, t_env *env);
 #endif
