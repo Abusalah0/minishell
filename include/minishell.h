@@ -6,7 +6,7 @@
 /*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/26 19:24:00 by abdsalah          #+#    #+#             */
-/*   Updated: 2025/01/30 02:55:01 by abdsalah         ###   ########.fr       */
+/*   Updated: 2025/02/01 23:23:27 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,7 +127,7 @@ void        ft_echo(void);
 /* 
 ** ft_env: Built-in env command to print environment variables to stdout.
 */
-void        ft_env(void);
+void        ft_env(t_shell *shell);
 
 /* 
 ** ft_cd: Built-in cd command to change the current directory.
