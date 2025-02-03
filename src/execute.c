@@ -6,12 +6,13 @@
 /*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 01:23:07 by abdsalah          #+#    #+#             */
-/*   Updated: 2025/02/03 14:23:44 by abdsalah         ###   ########.fr       */
+/*   Updated: 2025/02/03 14:43:12 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/parsing.h"
 
+int g_last_exit_status = 0;
 static int	is_redirect_token(int type)
 {
 	return (type == REDIRECT_IN || type == REDIRECT_OUT ||
@@ -183,6 +184,7 @@ static void	execute_pipeline(t_shell *shell, char **envp)
 	pid_t	pid;
 	int		in_fd;
 	int		out_fd;
+	int		wstatus;	
 
 	i = 0;
 	while (i < shell->command_count)
@@ -240,8 +242,13 @@ static void	execute_pipeline(t_shell *shell, char **envp)
 			prev_fd = -1;
 		i++;
 	}
-	while (wait(NULL) > 0)
-		;
+	while (wait(&wstatus) != pid) 
+		; // Loop until the last process finishes
+	if (WIFEXITED(wstatus)) 
+		g_last_exit_status = WEXITSTATUS(wstatus);
+	else if (WIFSIGNALED(wstatus))
+		g_last_exit_status = 128 + WTERMSIG(wstatus);
+
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -275,6 +282,7 @@ int	main(int argc, char **argv, char **envp)
 			continue;
 		}
 		execute_pipeline(shell, envp);
+		printf("exit status: %d\n", g_last_exit_status);
 		free_shell(shell);
 		free_str_array(commands);
 		free(processed_input);
