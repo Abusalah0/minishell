@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ahramada.h                                         :+:      :+:    :+:   */
+/*   parsing.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ahramada <ahramada@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/01 20:30:00 by ahramada          #+#    #+#             */
-/*   Updated: 2025/02/01 19:59:48 by ahramada         ###   ########.fr       */
+/*   Updated: 2025/02/03 04:40:03 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,5 +88,6 @@ const char		*get_token_type_name(t_token_type type);
 void			print_shell(t_shell *shell);
 char			*ft_str_replace(const char *str, const char *old, const char *new);
 char			*preprocess_input(char *input);
+void			free_str_array(char **arr);
 
 #endif /* PARSING_H */

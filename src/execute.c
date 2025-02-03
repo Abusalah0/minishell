@@ -6,7 +6,7 @@
 /*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 01:23:07 by abdsalah          #+#    #+#             */
-/*   Updated: 2025/02/03 04:36:59 by abdsalah         ###   ########.fr       */
+/*   Updated: 2025/02/03 14:23:44 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,9 +49,9 @@ static char	**build_command_argv(t_command *cmd)
 	argv = malloc(sizeof(char *) * (count + 1));
 	if (!argv)
 		return (NULL);
-	i = 0;
+	i = -1;
 	j = 0;
-	while (i < cmd->token_count)
+	while (++i < cmd->token_count)
 	{
 		if (is_redirect_token(cmd->tokens[i]->type))
 		{
@@ -59,7 +59,11 @@ static char	**build_command_argv(t_command *cmd)
 			continue ;
 		}
 		argv[j++] = ft_strdup(cmd->tokens[i]->value);
-		i++;
+		if (!argv[j - 1])
+		{
+			free_str_array(argv);
+			return (NULL);
+		}
 	}
 	argv[j] = NULL;
 	return (argv);
@@ -110,7 +114,7 @@ static void	get_redirections(t_command *cmd, int *in_fd, int *out_fd)
 	}
 }
 
-static void	free_str_array(char **arr)
+void	free_str_array(char **arr)
 {
 	int	i = 0;
 	if (!arr)
@@ -137,7 +141,7 @@ static char *find_executable_in_paths(char **cmd, char **paths, char **full_path
             return (*full_path);
         }
         free(*full_path);
-        (*i)++;  // Fix: Properly increment i
+        (*i)++;
     }
     return (NULL);
 }
@@ -150,7 +154,7 @@ static char *find_command_path(char *cmd, char **envp)
     int     i;
 
     if (ft_strchr(cmd, '/'))
-        return (ft_strdup(cmd));
+        return (ft_strdup(cmd));// null check
     i = -1;
     while (envp[++i])
     {
@@ -212,14 +216,14 @@ static void	execute_pipeline(t_shell *shell, char **envp)
 			if (i < shell->command_count - 1)
 				close(pipe_fd[0]);
 			{
-				char **argv = build_command_argv(shell->commands[i]);
+				char **argv = build_command_argv(shell->commands[i]);// null check
 				char *cmd_path = find_command_path(argv[0], envp);
 				if (!cmd_path)
 				{
 					fprintf(stderr, "%s: command not found\n", argv[0]);
 					exit(127);
 				}
-				execve(cmd_path, argv, envp);
+				execve(cmd_path, argv, envp);// check for execve return
 				perror("execve");
 				exit(EXIT_FAILURE);
 			}
@@ -263,7 +267,7 @@ int	main(int argc, char **argv, char **envp)
 		processed_input = preprocess_input(input);
 		commands = ft_split(processed_input, '|');
 		num_commands = count_words(processed_input, '|');
-		shell = allocate_shell_commands(num_commands, commands);
+		shell = allocate_shell_commands(num_commands, commands); 
 		if (!shell)
 		{
 			free(processed_input);
