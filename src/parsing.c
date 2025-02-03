@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parsing.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ahramada <ahramada@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 01:23:07 by abdsalah          #+#    #+#             */
-/*   Updated: 2025/02/01 20:07:33 by ahramada         ###   ########.fr       */
+/*   Updated: 2025/02/03 03:58:29 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,23 +210,6 @@ void	free_shell(t_shell *shell)
 }
 const char *get_token_type_name(t_token_type type)
 {
-    // switch (type)
-    // {
-    //     case COMMAND: return "COMMAND";
-    //     case ARGUMENT: return "ARGUMENT";
-    //     case PIPE: return "PIPE";
-    //     case REDIRECT_IN: return "REDIRECT_IN";
-    //     case REDIRECT_OUT: return "REDIRECT_OUT";
-    //     case REDIRECT_APPEND: return "REDIRECT_APPEND";
-    //     case HEREDOC: return "HEREDOC";
-    //     case ENV_VAR: return "ENV_VAR";
-    //     case DOLLAR_SIGN: return "DOLLAR_SIGN";
-    //     case SINGLE_QUOTE: return "SINGLE_QUOTE";
-    //     case DOUBLE_QUOTE: return "DOUBLE_QUOTE";
-    //     case INPUT_FILE: return "INPUT_FILE";
-    //     case OUTPUT_FILE: return "OUTPUT_FILE";
-    //     default: return "UNKNOWN";
-    // }
 	return (char *[]){"COMMAND",
 	"ARGUMENT",
 	"PIPE",
@@ -264,52 +247,6 @@ void print_shell(t_shell *shell)
         i++;
     }
 }
-
-char	*ft_str_replace(const char *str, const char *old, const char *new)
-{
-	char	*result;
-	int		count;
-	int		new_len;
-	int		old_len;
-	int		i;
-	int		j;
-
-	if (!str || !old || !new)
-		return (NULL);
-	count = 0;
-	old_len = ft_strlen(old);
-	new_len = ft_strlen(new);
-	i = 0;
-	while (str[i])
-	{
-		if (ft_strncmp(&str[i], old, old_len) == 0)
-		{
-			count++;
-			i += old_len;
-		}
-		else
-			i++;
-	}
-	result = malloc(ft_strlen(str) + count * (new_len - old_len) + 1);
-	if (!result)
-		return (NULL);
-	i = 0;
-	j = 0;
-	while (str[i])
-	{
-		if (ft_strncmp(&str[i], old, old_len) == 0)
-		{
-			ft_memcpy(&result[j], new, new_len);
-			j += new_len;
-			i += old_len;
-		}
-		else
-			result[j++] = str[i++];
-	}
-	result[j] = '\0';
-	return (result);
-}
-
 
 char	*preprocess_input(char *input)
 {
