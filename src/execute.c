@@ -6,13 +6,14 @@
 /*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 01:23:07 by abdsalah          #+#    #+#             */
-/*   Updated: 2025/02/03 14:43:12 by abdsalah         ###   ########.fr       */
+/*   Updated: 2025/02/03 15:05:13 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/parsing.h"
 
 int g_last_exit_status = 0;
+
 static int	is_redirect_token(int type)
 {
 	return (type == REDIRECT_IN || type == REDIRECT_OUT ||

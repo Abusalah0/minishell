@@ -6,7 +6,7 @@
 /*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 01:23:07 by abdsalah          #+#    #+#             */
-/*   Updated: 2025/02/03 03:58:29 by abdsalah         ###   ########.fr       */
+/*   Updated: 2025/02/03 15:08:19 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,43 @@ int	count_words(char *str, char sep)
 	return (count);
 }
 
+
+static void	free_str_array(char **arr)
+{
+	int	i = 0;
+	if (!arr)
+		return;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
+}
+
+void	free_shell(t_shell *shell)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	while (i < shell->command_count)
+	{
+		j = 0;
+		while (j < shell->commands[i]->token_count)
+		{
+			free(shell->commands[i]->tokens[j]->value);
+			free(shell->commands[i]->tokens[j]);
+			j++;
+		}
+		free(shell->commands[i]->tokens);
+		free(shell->commands[i]);
+		i++;
+	}
+	free(shell->commands);
+	free(shell);
+}
+
 t_token_type	identify_token_type(char *token, t_next_token *decide)
 {
 	size_t	len;
@@ -145,69 +182,80 @@ t_token_type	identify_token_type(char *token, t_next_token *decide)
 	return (ARGUMENT);
 }
 
-t_shell	*allocate_shell_commands(int num_commands, char **shell_command)
+static int initialize_command_tokens(int cmd_index, t_shell *shell, char **tokens, t_next_token *token_state)
 {
-	t_shell			*shell;
-	t_next_token	decide;
-	int				i;
-	int				j;
-	char			**token_str;
+	int token_index = 0;
+	
+	while (tokens[token_index])
+	{
+		shell->commands[cmd_index]->tokens[token_index] = malloc(sizeof(t_token));
+		if (!shell->commands[cmd_index]->tokens[token_index])
+			return (0);
+		shell->commands[cmd_index]->tokens[token_index]->value = ft_strdup(tokens[token_index]);
+		if (!shell->commands[cmd_index]->tokens[token_index]->value)
+			return (0);
+		shell->commands[cmd_index]->tokens[token_index]->type = identify_token_type(tokens[token_index], token_state);
+		token_index++;
+	}
+	return token_index;
+}
 
-	i = 0;
+static int allocate_command_structure(t_shell *shell, int cmd_index, char **command_strings)
+{
+	t_next_token token_state = {1, 0, 0, 0, 0};
+	int token_count;
+	char **tokens;
+
+	shell->commands[cmd_index] = malloc(sizeof(t_command));
+	if (!shell->commands[cmd_index])
+		return (0);
+	shell->commands[cmd_index]->token_count = count_words(command_strings[cmd_index], ' ');
+	shell->commands[cmd_index]->tokens = malloc(sizeof(t_token *) * (shell->commands[cmd_index]->token_count + 1));
+	if (!shell->commands[cmd_index]->tokens)
+		return (0);
+	tokens = ft_split(command_strings[cmd_index], ' ');
+	if (!tokens)
+		return (0);
+	token_count = initialize_command_tokens(cmd_index, shell, tokens, &token_state);
+	if (token_count == 0)
+	{
+		free_str_array(tokens);
+		return (0);
+	}
+	shell->commands[cmd_index]->tokens[token_count] = NULL;
+	free_str_array(tokens);
+	return (1);
+}
+
+t_shell *allocate_shell_commands(int command_count, char **command_strings)
+{
+	t_shell *shell;
+	int cmd_index;
+
 	shell = malloc(sizeof(t_shell));
 	if (!shell)
 		return (NULL);
-	shell->commands = malloc(sizeof(t_command *) * (num_commands + 1));
+	shell->commands = malloc(sizeof(t_command *) * (command_count + 1));
 	if (!shell->commands)
+	{
+		free(shell);
 		return (NULL);
-	shell->command_count = num_commands;
-	while (i < num_commands)
+	}
+	shell->command_count = command_count;
+	for (cmd_index = 0; cmd_index < command_count; cmd_index++)
 	{
-        decide = (t_next_token){1, 0, 0, 0, 0};
-		shell->commands[i] = malloc(sizeof(t_command));
-		if (!shell->commands[i])
+		if (!allocate_command_structure(shell, cmd_index, command_strings))
+		{
+			free_shell(shell);
 			return (NULL);
-		shell->commands[i]->token_count = count_words(shell_command[i], ' ');
-		shell->commands[i]->tokens = malloc(sizeof(t_token *)
-				* (shell->commands[i]->token_count + 1));
-		token_str = ft_split(shell_command[i], ' ');
-		j = 0;
-		while (token_str[j])
-		{
-			shell->commands[i]->tokens[j] = malloc(sizeof(t_token));
-			shell->commands[i]->tokens[j]->value = ft_strdup(token_str[j]);
-			shell->commands[i]->tokens[j]->type = identify_token_type(token_str[j], &decide);
-			j++;
 		}
-		shell->commands[i]->tokens[j] = NULL;
-		free(token_str);
-		i++;
 	}
-	return (shell);
+	shell->commands[command_count] = NULL;
+	return shell;
 }
 
-void	free_shell(t_shell *shell)
-{
-	int	i;
-	int	j;
 
-	i = 0;
-	while (i < shell->command_count)
-	{
-		j = 0;
-		while (j < shell->commands[i]->token_count)
-		{
-			free(shell->commands[i]->tokens[j]->value);
-			free(shell->commands[i]->tokens[j]);
-			j++;
-		}
-		free(shell->commands[i]->tokens);
-		free(shell->commands[i]);
-		i++;
-	}
-	free(shell->commands);
-	free(shell);
-}
+
 const char *get_token_type_name(t_token_type type)
 {
 	return (char *[]){"COMMAND",
