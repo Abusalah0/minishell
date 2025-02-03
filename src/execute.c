@@ -3,29 +3,31 @@
 /*                                                        :::      ::::::::   */
 /*   execute.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ahramada <ahramada@student.42.fr>          +#+  +:+       +#+        */
+/*   By: abdsalah <abdsalah@student.42amman.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 01:23:07 by abdsalah          #+#    #+#             */
-/*   Updated: 2025/02/01 20:11:23 by ahramada         ###   ########.fr       */
+/*   Updated: 2025/02/03 04:36:59 by abdsalah         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/parsing.h"
 
-static char	**build_command_argv(t_command *cmd)
+static int	is_redirect_token(int type)
 {
-	int		i;
-	int		count;
-	char	**argv;
+	return (type == REDIRECT_IN || type == REDIRECT_OUT ||
+			type == REDIRECT_APPEND || type == HEREDOC);
+}
+
+static int	count_command_arguments(t_command *cmd)
+{
+	int	i;
+	int	count;
 
 	count = 0;
 	i = 0;
 	while (i < cmd->token_count)
 	{
-		if (cmd->tokens[i]->type == REDIRECT_IN ||
-			cmd->tokens[i]->type == REDIRECT_OUT ||
-			cmd->tokens[i]->type == REDIRECT_APPEND ||
-			cmd->tokens[i]->type == HEREDOC)
+		if (is_redirect_token(cmd->tokens[i]->type))
 		{
 			i += 2;
 			continue ;
@@ -33,27 +35,36 @@ static char	**build_command_argv(t_command *cmd)
 		count++;
 		i++;
 	}
+	return (count);
+}
+
+static char	**build_command_argv(t_command *cmd)
+{
+	int		count;
+	int		i;
+	int		j;
+	char	**argv;
+
+	count = count_command_arguments(cmd);
 	argv = malloc(sizeof(char *) * (count + 1));
 	if (!argv)
 		return (NULL);
 	i = 0;
-	count = 0;
+	j = 0;
 	while (i < cmd->token_count)
 	{
-		if (cmd->tokens[i]->type == REDIRECT_IN ||
-			cmd->tokens[i]->type == REDIRECT_OUT ||
-			cmd->tokens[i]->type == REDIRECT_APPEND ||
-			cmd->tokens[i]->type == HEREDOC)
+		if (is_redirect_token(cmd->tokens[i]->type))
 		{
 			i += 2;
 			continue ;
 		}
-		argv[count++] = ft_strdup(cmd->tokens[i]->value);
+		argv[j++] = ft_strdup(cmd->tokens[i]->value);
 		i++;
 	}
-	argv[count] = NULL;
+	argv[j] = NULL;
 	return (argv);
 }
+
 
 static void	get_redirections(t_command *cmd, int *in_fd, int *out_fd)
 {
@@ -112,48 +123,53 @@ static void	free_str_array(char **arr)
 	free(arr);
 }
 
-static char	*find_command_path(char *cmd, char **envp)
+static char *find_executable_in_paths(char **cmd, char **paths, char **full_path, int *i)
 {
-	char	*path_var;
-	char	**paths;
-	char	*full_path;
-	int		i;
-
-	if (ft_strchr(cmd, '/'))
-		return (ft_strdup(cmd));
-	i = 0;
-	while (envp[i])
-	{
-		if (ft_strncmp(envp[i], "PATH=", 5) == 0)
-		{
-			path_var = envp[i] + 5;
-			paths = ft_split(path_var, ':');
-			if (!paths)
-				return (NULL);
-			i = 0;
-			while (paths[i])
-			{
-				full_path = malloc(ft_strlen(paths[i]) +
-						ft_strlen(cmd) + 2);
-				if (!full_path)
-					break ;
-				sprintf(full_path, "%s/%s", paths[i], cmd);
-				if (access(full_path, X_OK) == 0)
-				{
-					free_str_array(paths);
-					return (full_path);
-				}
-				free(full_path);
-				i++;
-			}
-			free_str_array(paths);
-			return (NULL);
-		}
-		i++;
-	}
-	return (NULL);
+    while (paths[*i])
+    {
+        *full_path = malloc(ft_strlen(paths[*i]) + ft_strlen(*cmd) + 2);
+        if (!*full_path)
+            return (NULL);
+        sprintf(*full_path, "%s/%s", paths[*i], *cmd);
+        if (access(*full_path, X_OK) == 0)
+        {
+            free_str_array(paths);
+            return (*full_path);
+        }
+        free(*full_path);
+        (*i)++;  // Fix: Properly increment i
+    }
+    return (NULL);
 }
 
+static char *find_command_path(char *cmd, char **envp)
+{
+    char    *path_var;
+    char    **paths;
+    char    *full_path;
+    int     i;
+
+    if (ft_strchr(cmd, '/'))
+        return (ft_strdup(cmd));
+    i = -1;
+    while (envp[++i])
+    {
+        if (ft_strncmp(envp[i], "PATH=", 5) == 0)
+        {
+            path_var = envp[i] + 5;
+            paths = ft_split(path_var, ':');
+            if (!paths)
+                return (NULL);
+            i = 0;
+            full_path = find_executable_in_paths(&cmd, paths, &full_path, &i);
+            if (full_path)
+                return (full_path);
+            free_str_array(paths);
+            return (NULL);
+        }
+    }
+    return (NULL);
+}
 
 static void	execute_pipeline(t_shell *shell, char **envp)
 {
